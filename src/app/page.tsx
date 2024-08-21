@@ -1,95 +1,148 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+"use client";
+import { Button, Flex, Input, Table, Tbody, Td, Tr } from "@chakra-ui/react";
+import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { queryClient } from "./providers";
 
-export default function Home() {
+export default function Page() {
+  const { data: Celuladata } = useQuery({
+    queryFn: async () => await getCelulas(),
+    queryKey: ["Celulas"],
+  });
+
+  const [tituloCelula, setTituloCelula] = useState("");
+
+  const handleSaveCelula = async () => {
+    try {
+      await postCelula(tituloCelula);
+      queryClient.invalidateQueries(["Celulas"]);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleDeleteModulo = async (id) => {
+    try {
+      await deleteCelula(id);
+      queryClient.invalidateQueries(["Celulas"]);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleDesabilitaModulo = async (id) => {
+    try {
+      await updateCelula(id);
+      queryClient.invalidateQueries(["Celulas"]);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>src/app/page.tsx</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
-
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
+    <>
+      <Flex
+        maxW="50%"
+        borderWidth={"2px"}
+        direction={"column"}
+        gap={8}
+        marginTop={20}
+        alignItems={"center"}
+      >
+        <Input
+          marginTop="5"
+          variant="filled"
+          maxW={"50%"}
+          placeholder="Insira O título"
+          value={tituloCelula}
+          onChange={(e) => setTituloCelula(e.target.value)}
         />
-      </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
+        <Button maxW="30%" colorScheme="blue" onClick={handleSaveCelula}>
+          Cadastrar
+        </Button>
+        <Table
+          borderWidth={"2px"}
+          variant="striped"
+          colorScheme="blackAlpha"
+          maxW="50%"
         >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore starter templates for Next.js.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+          <Tbody>
+            {Celuladata?.data?.map((celula) => (
+              <Tr key={celula.id}>
+                <Td>
+                  <Button
+                    colorScheme="red"
+                    onClick={() => handleDeleteModulo(celula.id)}
+                  >
+                    Excluir
+                  </Button>
+                </Td>
+                <Td>{celula.titulo}</Td>
+                <Td>
+                  <Button
+                    colorScheme="blackAlpha"
+                    onClick={() => handleDesabilitaModulo(celula.id)}
+                  >
+                    Desabilitar
+                  </Button>
+                </Td>
+              </Tr>
+            ))}
+          </Tbody>
+        </Table>
+      </Flex>
+    </>
   );
+}
+
+async function getCelulas() {
+  const celulas = await fetch("http://localhost:3002/Celula");
+  const json = await celulas.json();
+  return json;
+}
+
+async function deleteCelula(id) {
+  const response = await fetch(`http://localhost:3002/Celula/${id}`, {
+    method: "DELETE",
+  });
+
+  if (!response.ok) {
+    throw new Error("Erro ao deletar a celula");
+  }
+
+  return await response.json();
+}
+
+async function postCelula(titulo) {
+  const response = await fetch("http://localhost:3002/Celula", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ titulo }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Erro ao salvar a celula");
+  }
+
+  return await response.json();
+}
+
+async function updateCelula(id) {
+  const response = await fetch(`http://localhost:3002/Celula/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      titulo: "desabilitado",
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Erro ao atualizar a celula");
+  }
+
+  return await response.json();
 }

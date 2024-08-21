@@ -21,7 +21,7 @@ export default function Page() {
     }
   };
 
-  const handleDeleteModulo = async (id) => {
+  const handleDeleteCelula = async (id) => {
     try {
       await deleteCelula(id);
       queryClient.invalidateQueries(["Celulas"]);
@@ -30,7 +30,7 @@ export default function Page() {
     }
   };
 
-  const handleDesabilitaModulo = async (id) => {
+  const handleDesabilitaCelula = async (id) => {
     try {
       await updateCelula(id);
       queryClient.invalidateQueries(["Celulas"]);
@@ -72,7 +72,7 @@ export default function Page() {
                 <Td>
                   <Button
                     colorScheme="red"
-                    onClick={() => handleDeleteModulo(celula.id)}
+                    onClick={() => handleDeleteCelula(celula.id)}
                   >
                     Excluir
                   </Button>
@@ -81,7 +81,7 @@ export default function Page() {
                 <Td>
                   <Button
                     colorScheme="blackAlpha"
-                    onClick={() => handleDesabilitaModulo(celula.id)}
+                    onClick={() => handleDesabilitaCelula(celula.id)}
                   >
                     Desabilitar
                   </Button>
